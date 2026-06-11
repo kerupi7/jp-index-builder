@@ -180,6 +180,7 @@ BENCHMARKS = [
     {"symbol": "^IXIC", "name": "NASDAQ"},
     {"symbol": "^NDX", "name": "NASDAQ100"},
     {"symbol": "^NYFANG", "name": "FANG+"},
+    {"symbol": "1306.T", "name": "TOPIX"},  # TOPIX連動ETF(1306)で代用。%比較は指数とほぼ同一
 ]
 BENCHMARK = BENCHMARKS[0]  # 後方互換
 

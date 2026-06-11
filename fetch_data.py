@@ -48,8 +48,9 @@ def curl_json(url, timeout=40):
         return None, f"JSON解析失敗(先頭: {body[:50]!r})"
 
 
-def fetch_yahoo(symbol, rng, retries=4, sleep=1.0):
-    """Yahoo Financeの日足を取得して [(date, close), ...] を返す。失敗時は空リスト。"""
+def fetch_yahoo(symbol, rng, retries=4, sleep=1.0, adj=False):
+    """Yahoo Financeの日足を取得して [(date, close), ...] を返す。失敗時は空リスト。
+    adj=True なら調整後終値(adjclose)を優先（ETF/個別の分割・配当補正用）。指数は通常adjclose無し→closeに自動フォールバック。"""
     url = (f"https://query1.finance.yahoo.com/v8/finance/chart/"
            f"{urllib.parse.quote(symbol)}?range={rng}&interval=1d")
     for attempt in range(1, retries + 1):
@@ -71,12 +72,20 @@ def fetch_yahoo(symbol, rng, retries=4, sleep=1.0):
 
         ts = result["timestamp"]
         gmt = (result.get("meta") or {}).get("gmtoffset", 0) or 0
-        try:
-            closes = result["indicators"]["quote"][0]["close"]
-        except (KeyError, IndexError):
-            print(f"    ! {symbol}: 終値フィールドなし 再試行 {attempt}/{retries}")
-            time.sleep(sleep * attempt)
-            continue
+        ind = result.get("indicators") or {}
+        closes = None
+        if adj:  # 調整後終値を優先（分割・配当補正）
+            try:
+                closes = ind["adjclose"][0]["adjclose"]
+            except (KeyError, IndexError, TypeError):
+                closes = None
+        if closes is None:
+            try:
+                closes = ind["quote"][0]["close"]
+            except (KeyError, IndexError, TypeError):
+                print(f"    ! {symbol}: 終値フィールドなし 再試行 {attempt}/{retries}")
+                time.sleep(sleep * attempt)
+                continue
 
         by_date = {}
         for t, c in zip(ts, closes):
@@ -126,7 +135,7 @@ def main():
     master_dates = None
     for j, b in enumerate(BENCHMARKS):
         print(f"[bench {j + 1}/{len(BENCHMARKS)}] {b['name']} ({b['symbol']}) 取得中...")
-        rows = fetch_yahoo(b["symbol"], rng, sleep=args.sleep)
+        rows = fetch_yahoo(b["symbol"], rng, sleep=args.sleep, adj=True)
         if not rows:
             if j == 0:
                 print("致命的: 基準ベンチ(日経225)を取得できませんでした。")
