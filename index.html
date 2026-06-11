@@ -5,14 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>保有トラッカー｜日経225・S&P500とパフォーマンス比較</title>
 <meta name="description" content="自分の保有株（株数・取得単価・取得日）を入力し、評価額の推移と日経225・S&P500とのパフォーマンス比較を毎日チェック。" />
-<link rel="stylesheet" href="style.css?v=5" />
+<link rel="stylesheet" href="style.css?v=6" />
 <link rel="stylesheet" href="flatpickr.min.css" />
 <link rel="stylesheet" href="flatpickr.dark.css" />
 <script src="chart.umd.min.js" defer></script>
 <script src="flatpickr.min.js" defer></script>
 <script src="flatpickr.ja.js" defer></script>
-<script src="engine.js?v=5" defer></script>
-<script src="app.js?v=5" defer></script>
+<script src="engine.js?v=6" defer></script>
+<script src="app.js?v=6" defer></script>
 </head>
 <body>
 <header class="topbar">
@@ -24,6 +24,7 @@
     </div>
   </div>
   <div class="topbar-right">
+    <button id="btnShot" class="shot-btn" title="入力欄や表を隠してスクショ向け表示に切替">📷 撮影モード</button>
     <span id="dataBadge" class="badge badge-warn">データ読込中…</span>
   </div>
 </header>

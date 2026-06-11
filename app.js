@@ -157,6 +157,11 @@
         schedule();
       })
     );
+    $("#btnShot").addEventListener("click", () => {
+      const on = document.body.classList.toggle("shot-mode");
+      $("#btnShot").textContent = on ? "✓ 通常に戻す" : "📷 撮影モード";
+      setTimeout(() => { if (chart) chart.resize(); }, 60); // レイアウト変化にチャートを合わせる
+    });
   }
 
   // ---------- 計算＆描画 ----------

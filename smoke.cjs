@@ -15,7 +15,7 @@ const { window } = dom;
 const { document } = window;
 
 window.fetch = () => Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(JSON.parse(pricesJSON)) });
-window.Chart = class { constructor(c, cfg) { this.data = cfg.data; this.options = cfg.options; } update() {} destroy() {} };
+window.Chart = class { constructor(c, cfg) { this.data = cfg.data; this.options = cfg.options; } update() {} destroy() {} resize() {} };
 window.requestAnimationFrame = (cb) => setTimeout(() => cb(Date.now()), 0);
 window.cancelAnimationFrame = (id) => clearTimeout(id);
 
@@ -101,6 +101,13 @@ function addHolding(ticker, shares, cost, date) {
   check("小数株数を受付(1件)", $("#holdCount").textContent === "1", $("#holdCount").textContent);
   check("一覧にフル桁表示", /0\.46948356/.test($("#holdingList").textContent), $("#holdingList").textContent.slice(0, 50));
   check("表にもフル桁", /0\.46948356/.test($("#holdingsTable tbody").textContent));
+
+  console.log("\n[撮影モード]");
+  $("#btnShot").click(); await tick();
+  check("撮影モードON", document.body.classList.contains("shot-mode"));
+  check("ボタン表示が戻す", /戻す/.test($("#btnShot").textContent));
+  $("#btnShot").click(); await tick();
+  check("撮影モードOFFに戻る", !document.body.classList.contains("shot-mode"));
 
   console.log(`\n=== smoke: ${pass} passed, ${fail} failed ===`);
   process.exit(fail ? 1 : 0);
