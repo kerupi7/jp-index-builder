@@ -87,6 +87,14 @@ function addHolding(ticker, shares, cost, date) {
   $("#btnClearAll").click(); await tick(); await tick();
   check("0件・空状態に戻る", $("#holdCount").textContent === "0" && /保有未入力/.test($("#compareStrip").textContent));
 
+  console.log("\n[英数字コード285A(キオクシア)]");
+  if (DATA.stocks["285A"]) {
+    addHolding("285A キオクシアHD", 100, 2000, entryDate); await tick(); await tick();
+    check("285A(英数字)解決で追加", $("#holdCount").textContent === "1", $("#holdCount").textContent);
+  } else {
+    check("285Aがサンプルに存在(make_sample要再生成)", false, "no 285A in data");
+  }
+
   console.log(`\n=== smoke: ${pass} passed, ${fail} failed ===`);
   process.exit(fail ? 1 : 0);
 })().catch((e) => { console.error("FATAL", e); process.exit(2); });

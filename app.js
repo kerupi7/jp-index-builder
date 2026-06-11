@@ -66,15 +66,19 @@
   // 入力文字列から証券コードを解決
   function resolveCode(input) {
     const s = (input || "").trim();
+    // 先頭トークン（datalistは "コード 名称" 形式なのでコードが先頭）
+    const first = s.split(/\s+/)[0].toUpperCase();
+    if (state.data.stocks[first]) return first;
+    // 4桁数字コード
     const m = s.match(/\d{4}/);
     if (m && state.data.stocks[m[0]]) return m[0];
+    // 新形式の英数字コード（例: 285A）
+    const m2 = s.toUpperCase().match(/\b\d{3}[0-9A-Z]\b/);
+    if (m2 && state.data.stocks[m2[0]]) return m2[0];
+    // 名前一致
     if (s.length >= 2) {
-      for (const c in state.data.stocks) {
-        if (state.data.stocks[c].name === s) return c;
-      }
-      for (const c in state.data.stocks) {
-        if (state.data.stocks[c].name.includes(s)) return c;
-      }
+      for (const c in state.data.stocks) if (state.data.stocks[c].name === s) return c;
+      for (const c in state.data.stocks) if (state.data.stocks[c].name.includes(s)) return c;
     }
     return null;
   }

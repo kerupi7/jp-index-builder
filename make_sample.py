@@ -90,7 +90,7 @@ def main():
 
     stocks = {}
     for code, name, sector, shares in UNIVERSE:
-        s0 = START_PRICE.get(code) or (800 + (int(code) % 12000))  # 未登録コードは適当に散らす
+        s0 = START_PRICE.get(code) or (800 + (sum(ord(ch) for ch in code) * 137 % 12000))  # 未登録コードは適当に散らす（英数字コードも可）
         # 小型〜中型に少し高いドリフトを与え、均等加重が指数を上回りやすい構図にする（デモ）
         # 中小型(株価が低め)にやや高いドリフトを与え、均等加重が指数を上回りやすい構図に（デモ）
         small_tilt = 0.04 if s0 < 5000 else 0.0
