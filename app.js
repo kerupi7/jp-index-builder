@@ -175,12 +175,17 @@
     const costF = pf.cost[n - 1], valF = pf.value[n - 1];
     const pRet = costF > 0 ? valF / costF - 1 : 0;
 
-    const chips = [{ label: "保有", color: col(SELF_COLOR), pct: pRet, sub: yen(valF) }];
-    pf.benches.forEach((b, k) => {
-      const bf = b.value[n - 1], bRet = costF > 0 ? bf / costF - 1 : 0;
-      chips.push({ label: b.name, color: col(BENCH_COLORS[k % BENCH_COLORS.length]), pct: bRet, sub: ppGap(pRet - bRet) });
+    let wins = 0;
+    const benchChips = pf.benches.map((b, k) => {
+      const bRet = costF > 0 ? b.value[n - 1] / costF - 1 : 0;
+      if (pRet > bRet) wins++;
+      return { label: b.name, color: col(BENCH_COLORS[k % BENCH_COLORS.length]), pct: bRet, sub: ppGap(pRet - bRet) };
     });
-    renderCompare(chips);
+    const selfChip = {
+      label: "保有（あなた）", color: col(SELF_COLOR), pct: pRet,
+      sub: `評価額 ${yen(valF)} ・ ${pf.benches.length}指数中 ${wins} に勝ち`,
+    };
+    renderCompare([selfChip, ...benchChips]);
     renderStatLine([
       ["投資額", yen(costF)], ["評価額", yen(valF)], ["含み損益", signYen(valF - costF)],
       ["損益率", signPct(pRet)], ["期間", `${n.toLocaleString()}営業日`],
@@ -214,12 +219,14 @@
 
   // ---------- 比較チップ・統計行 ----------
   function renderCompare(items) {
-    $("#compareStrip").innerHTML = items.map((it) =>
-      `<div class="cmp"><span class="dot" style="--c:${it.color}"></span>` +
+    const chip = (it, cls) =>
+      `<div class="cmp${cls || ""}"><span class="dot" style="--c:${it.color}"></span>` +
       `<div class="cmp-body"><span class="cmp-label">${it.label}</span>` +
       `<span class="cmp-pct ${it.pct >= 0 ? "up" : "down"}">${signPct(it.pct)}</span>` +
-      `<span class="cmp-sub">${it.sub || ""}</span></div></div>`
-    ).join("");
+      `<span class="cmp-sub">${it.sub || ""}</span></div></div>`;
+    const self = items[0], benches = items.slice(1);
+    const benchHtml = benches.length ? `<div class="cmp-benches">${benches.map((b) => chip(b)).join("")}</div>` : "";
+    $("#compareStrip").innerHTML = chip(self, " cmp-self") + benchHtml;
   }
   function renderStatLine(pairs) {
     $("#statLine").innerHTML = pairs.map(([k, v]) => `<span>${k}<b>${v}</b></span>`).join("");
