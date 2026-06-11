@@ -183,7 +183,7 @@
     });
     const selfChip = {
       label: "保有（あなた）", color: col(SELF_COLOR), pct: pRet,
-      sub: `評価額 ${yen(valF)} ・ ${pf.benches.length}指数中 ${wins} に勝ち`,
+      sub: `${wins}/${pf.benches.length} 指数に勝ち`,
     };
     renderCompare([selfChip, ...benchChips]);
     renderStatLine([
@@ -219,14 +219,12 @@
 
   // ---------- 比較チップ・統計行 ----------
   function renderCompare(items) {
-    const chip = (it, cls) =>
-      `<div class="cmp${cls || ""}"><span class="dot" style="--c:${it.color}"></span>` +
+    $("#compareStrip").innerHTML = items.map((it, i) =>
+      `<div class="cmp${i === 0 ? " cmp-self" : ""}"><span class="dot" style="--c:${it.color}"></span>` +
       `<div class="cmp-body"><span class="cmp-label">${it.label}</span>` +
       `<span class="cmp-pct ${it.pct >= 0 ? "up" : "down"}">${signPct(it.pct)}</span>` +
-      `<span class="cmp-sub">${it.sub || ""}</span></div></div>`;
-    const self = items[0], benches = items.slice(1);
-    const benchHtml = benches.length ? `<div class="cmp-benches">${benches.map((b) => chip(b)).join("")}</div>` : "";
-    $("#compareStrip").innerHTML = chip(self, " cmp-self") + benchHtml;
+      `<span class="cmp-sub">${it.sub || ""}</span></div></div>`
+    ).join("");
   }
   function renderStatLine(pairs) {
     $("#statLine").innerHTML = pairs.map(([k, v]) => `<span>${k}<b>${v}</b></span>`).join("");

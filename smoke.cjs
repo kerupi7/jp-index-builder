@@ -50,9 +50,9 @@ function addHolding(ticker, shares, cost, date) {
   check("保有一覧に1件", document.querySelectorAll("#holdingList .holding-item").length === 1);
   check("比較チップ=保有+ベンチ数", document.querySelectorAll("#compareStrip .cmp").length === 1 + NBENCH,
     document.querySelectorAll("#compareStrip .cmp").length + " vs " + (1 + NBENCH));
-  check("保有が主役カード(.cmp-self)", document.querySelectorAll("#compareStrip .cmp-self").length === 1);
-  check("ベンチはグリッド配置", document.querySelectorAll("#compareStrip .cmp-benches .cmp").length === NBENCH);
-  check("主役に勝ち数表示", /指数中 \d+ に勝ち/.test($("#compareStrip").textContent));
+  check("保有が強調カード(.cmp-self)", document.querySelectorAll("#compareStrip .cmp-self").length === 1);
+  check("ベンチは保有以外のチップ", document.querySelectorAll("#compareStrip .cmp:not(.cmp-self)").length === NBENCH);
+  check("保有に勝ち数表示", /\d+\/\d+ 指数に勝ち/.test($("#compareStrip").textContent));
   check("チップに保有/日経225/S&P500", /保有/.test($("#compareStrip").textContent) && /日経225/.test($("#compareStrip").textContent) && /S&P500/.test($("#compareStrip").textContent));
   check("保有テーブル1行", document.querySelectorAll("#holdingsTable tbody tr").length === 1);
   check("テーブルに取得単価・取得日列", /取得単価/.test($("#holdingsTable thead").textContent) && /取得日/.test($("#holdingsTable thead").textContent));

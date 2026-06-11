@@ -151,20 +151,17 @@ small{color:var(--mut)}
 .unit-toggle{display:flex;gap:4px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:3px}
 .unit-toggle button{border:0;background:transparent;color:var(--mut);font-size:12px;font-weight:700;padding:5px 11px;border-radius:6px;cursor:pointer}
 .unit-toggle button.active{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
-.compare-strip{display:flex;flex-direction:column;gap:12px;margin:2px 0 14px}
-.cmp-benches{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
+.compare-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:10px;margin:2px 0 14px}
 .cmp{display:flex;align-items:center;gap:9px;background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:9px 14px;min-width:0}
 .cmp .dot{width:10px;height:10px;border-radius:50%;background:var(--c);flex:none}
 .cmp-body{display:flex;flex-direction:column;line-height:1.25;min-width:0}
-.cmp-label{font-size:11.5px;color:var(--mut)}
+.cmp-label{font-size:11.5px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cmp-pct{font-size:18px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:.3px}
-.cmp-sub{font-size:11px;color:var(--mut2);font-variant-numeric:tabular-nums}
-/* 保有（あなた）＝主役カード */
-.cmp-self{border:2px solid var(--accent);background:rgba(91,140,255,.10);padding:14px 18px;gap:12px}
-.cmp-self .dot{width:13px;height:13px}
-.cmp-self .cmp-label{color:#9fb8ff;font-size:12.5px;font-weight:700}
-.cmp-self .cmp-pct{font-size:32px}
-.cmp-self .cmp-sub{font-size:12px;color:var(--mut)}
+.cmp-sub{font-size:11px;color:var(--mut2);font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* 保有（あなた）＝色で強調（サイズは他と同じ） */
+.cmp-self{border:2px solid var(--accent);background:rgba(91,140,255,.14)}
+.cmp-self .cmp-label{color:#9fb8ff;font-weight:700}
+.cmp-self .cmp-sub{color:#8aa6e6}
 .stat-line{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;font-size:12px;color:var(--mut)}
 .stat-line span b{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums;margin-left:5px}
 .chart-wrap{position:relative;height:380px}
@@ -220,10 +217,9 @@ body.shot-mode .chart-wrap{height:300px}
   .layout{padding:12px;gap:13px}
   .panel,.chart-card,.table-card{padding:13px}
   .chart-wrap{height:240px}
-  .cmp-benches{grid-template-columns:repeat(2,1fr);gap:8px}
+  .compare-strip{grid-template-columns:repeat(2,1fr);gap:8px}
   .cmp{padding:8px 10px;gap:7px}
-  .cmp-benches .cmp-pct{font-size:16px}
-  .cmp-self .cmp-pct{font-size:27px}
+  .cmp-pct{font-size:16px}
   .cmp-sub{font-size:10px}
   .stat-line{gap:10px 14px;font-size:11px}
 }
