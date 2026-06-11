@@ -206,9 +206,73 @@
     return [];
   }
 
+  // ---- 保有ポートフォリオ評価 ----------------------------------------------
+  // 取得日(dstr)が入る営業日インデックス（その日以降で最初の営業日）。
+  function dateIndex(dates, dstr) {
+    if (!dstr || dstr <= dates[0]) return 0;
+    for (let t = 0; t < dates.length; t++) if (dates[t] >= dstr) return t;
+    return dates.length - 1;
+  }
+
+  // holdings: [{code, shares, cost(取得単価), date(取得日 YYYY-MM-DD)}]
+  // 返すもの: 評価額・累計元本・各ベンチ「同じ資金を同じ日に入れた場合」の価値（時系列）。
+  function computePortfolio(data, holdings) {
+    const dates = data.dates;
+    const benches = benchmarksOf(data);
+    const H = holdings
+      .filter((h) => data.stocks[h.code] && h.shares > 0)
+      .map((h) => {
+        const ei = dateIndex(dates, h.date);
+        return { ...h, ei, bEntry: benches.map((b) => b.close[ei]) };
+      });
+    if (!H.length) return null;
+
+    const i0 = Math.min(...H.map((h) => h.ei));
+    const i1 = dates.length - 1;
+    const value = [], cost = [];
+    const benchVals = benches.map(() => []);
+
+    for (let t = i0; t <= i1; t++) {
+      let v = 0, c = 0;
+      const bv = benches.map(() => 0);
+      for (const h of H) {
+        if (h.ei > t) continue; // まだ取得していない
+        const invested = h.shares * h.cost;
+        c += invested;
+        const p = priceAt(data, h.code, t);
+        if (p !== null) v += h.shares * p;
+        benches.forEach((b, k) => {
+          const be = h.bEntry[k], bt = b.close[t];
+          if (be && bt) bv[k] += invested * (bt / be); // 同額・同日に指数へ入れたら
+        });
+      }
+      value.push(v); cost.push(c);
+      benches.forEach((b, k) => benchVals[k].push(bv[k]));
+    }
+
+    const perHolding = H.map((h) => {
+      const p = priceAt(data, h.code, i1);
+      const invested = h.shares * h.cost;
+      const val = p !== null ? h.shares * p : 0;
+      return {
+        code: h.code, name: data.stocks[h.code].name, sector: data.stocks[h.code].sector,
+        shares: h.shares, cost: h.cost, date: h.date, price: p,
+        invested, value: val, pl: val - invested,
+        ret: invested > 0 ? val / invested - 1 : 0,
+      };
+    });
+
+    return {
+      dates: dates.slice(i0, i1 + 1),
+      value, cost,
+      benches: benches.map((b, k) => ({ sym: b.sym, name: b.name, value: benchVals[k] })),
+      perHolding, i0, i1,
+    };
+  }
+
   const Engine = {
-    priceAt, availableCodes, targetWeights, benchmarksOf,
-    computeIndexSeries, computeDCASeries,
+    priceAt, availableCodes, targetWeights, benchmarksOf, dateIndex,
+    computeIndexSeries, computeDCASeries, computePortfolio,
     maxDrawdown, cagr, annualVol, irrAnnual,
   };
 

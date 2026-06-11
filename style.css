@@ -106,6 +106,32 @@ small{color:var(--mut)}
 .saved-item button{background:none;border:0;color:var(--mut2);font-size:14px;padding:0 2px}
 .saved-item button:hover{color:var(--down)}
 
+/* holdings form */
+.form{display:flex;flex-direction:column;gap:10px}
+.form label{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--mut)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.num{background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:9px;padding:9px 11px;font-size:13px;outline:none;width:100%;font-variant-numeric:tabular-nums}
+.num:focus{border-color:var(--accent)}
+.form .primary{width:100%;padding:10px;font-size:13.5px;margin-top:2px}
+.formmsg{font-size:11.5px;min-height:14px;margin:0}
+.formmsg.err{color:var(--down)} .formmsg.ok{color:var(--up)}
+.holdinglist{display:flex;flex-direction:column;gap:6px;max-height:360px;overflow:auto}
+.holding-empty{font-size:12px;color:var(--mut2);padding:6px 2px}
+.holding-item{display:grid;grid-template-columns:1fr auto;gap:2px 8px;background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:8px 10px}
+.holding-item .h-nm{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.holding-item .h-del{grid-row:span 2;align-self:center;background:none;border:0;color:var(--mut2);font-size:16px;cursor:pointer;padding:0 2px}
+.holding-item .h-del:hover{color:var(--down)}
+.holding-item .h-sub{font-size:11px;color:var(--mut);grid-column:1;font-variant-numeric:tabular-nums}
+
+/* flatpickr（日付ピッカー）をテーマ色に寄せる */
+.num{color-scheme:dark}
+.flatpickr-calendar{font-family:inherit;font-size:13px;border-radius:12px;box-shadow:var(--shadow)}
+.flatpickr-day.selected,.flatpickr-day.selected:hover,.flatpickr-day.startRange,.flatpickr-day.endRange{
+  background:var(--accent);border-color:var(--accent)}
+.flatpickr-day.today{border-color:var(--accent2)}
+.flatpickr-day:hover{background:var(--panel2)}
+.flatpickr-months .flatpickr-month,.flatpickr-current-month{color:var(--ink)}
+
 /* metric cards */
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:13px}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:15px 16px;position:relative;overflow:hidden}

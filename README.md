@@ -1,93 +1,72 @@
-# 自作指数ビルダー（JP Index Builder）
+# 保有トラッカー（JP Holdings Tracker）
 
-日本株を自由に組み合わせて自分だけの株価指数をつくり、**毎日◯円ずつ積立**したら
-**日経225を超えられるか**を検証するWebツールＸ。GitHub Pages で静的公開できます。
+自分の保有株（**株数・取得単価・取得日**）を入力して、評価額の推移と
+**日経225・S&P500とのパフォーマンス比較**を毎日チェックできるWebツール。GitHub Pages で静的公開できます。
 
-- **指数モード** … 選んだ銘柄を毎日リバランスした株価指数（始点=100）を日経225・S&P500と比較
-- **積立モード** … 毎日定額で買い続けた資産推移を、日経225・S&P500への同額積立と比較
-- **チャート単位** … 「資産額(¥)」⇄「リターン(％)」をワンタップ切替。％表示で"何％差か"を直接比較
-- **加重方式** … 均等 / 株価 / 時価総額 / カスタム比率 を切替
-- データは **Yahoo Finance（無料・登録不要）** から取得 → `data/prices.json` に保存 → サイトはJSONを読むだけ（CORSの問題なし）
+- **保有を入力** … 銘柄・株式数・取得単価・取得日を追加（複数ロットOK）
+- **増減を毎日チャート** … 評価額／リターン％を時系列で表示
+- **指数と比較** … 「同じ資金を同じ取得日に日経225・S&P500へ入れていたら」の価値を並べ、保有が上回っているか一目で
+- 保有データは**ブラウザ内(localStorage)だけ**に保存 → 公開リポジトリには出ない（非公開）
+- 価格データは **Yahoo Finance（無料）** から取得 → `data/prices.json` に保存 → サイトはJSONを読むだけ（CORS問題なし）
 
-> ⚠️ 同梱の `data/prices.json` は動作確認用の **サンプル（乱数）** です。実データは `fetch_data.py` で取得して上書きしてください。
+> ⚠️ 同梱の `data/prices.json` は動作確認用の**サンプル（乱数）**の場合があります。実データは `fetch_data.py` で取得して上書きしてください。
 
 ---
 
-## すぐ見る（いちばん簡単）
+## すぐ見る
 
-`preview.html` を**ダブルクリック**してブラウザで開くだけ。サーバー不要・サンプルデータ入りで全機能を試せます。
+`preview.html` を**ダブルクリック**でブラウザが開き、サンプルデータで全機能を試せます。
 
 ## ローカルで本物どおりに動かす
-
-ブラウザの仕様上 `data/prices.json` の読み込みには簡易サーバーが必要です。
 
 ```bash
 cd jp-index-builder
 python3 -m http.server 8000
-# → ブラウザで http://localhost:8000 を開く
+# → ブラウザで http://localhost:8000
 ```
 
-## 実データに差し替える
+## 実データに差し替える（Yahoo Finance）
 
 ```bash
-python3 fetch_data.py            # 直近約5年を取得（標準ライブラリのみ・pip不要）
-python3 fetch_data.py --years 10 # 期間を変える
+python3 fetch_data.py            # 直近約5年（標準ライブラリ＋curl・pip不要）
+python3 fetch_data.py --limit 5  # お試しで先頭5銘柄だけ
 ```
 
-`data/prices.json` が実データで上書きされます。サイトを再読み込みすると、右上バッジが
-「実データ Yahoo Finance・YYYY-MM-DD 時点」に変わります。
-
-> Yahoo Financeにアクセスが集中するとまれに失敗します。その時は `--sleep 1.5` などで
-> 間隔を空けて再実行してください。
+`data/prices.json` が実データで上書きされ、右上バッジが「実データ Yahoo Finance・YYYY-MM-DD」に変わります。
+（取得は内部で `curl` を使います。macOS/Linuxには標準で入っています。）
 
 ---
 
-## GitHub Pages で公開する
+## 使い方
 
-1. このフォルダの中身をリポジトリ直下に置いて push
-2. GitHub の **Settings → Pages** で「Deploy from a branch」→ `main` / `(root)` を選択
-3. 数十秒後、`https://<ユーザー名>.github.io/<リポジトリ名>/` で公開
+1. 左の「① 保有を追加」で **銘柄／株式数／取得単価／取得日** を入れて「保有を追加」
+2. 中央のチャートに **保有・日経225・S&P500** が重なって表示される
+3. 右上で **「リターン%」⇄「評価額」** を切替。％表示で、あなたの線が指数の線より上なら指数超え
+4. 下の表で銘柄ごとの取得単価・現在値・評価額・含み損益・損益率を確認
 
-### データを自動更新する（任意）
-
-`.github/workflows/update-data.yml` を同梱しています。**Settings → Actions → General →
-Workflow permissions** を「Read and write」にしておけば、**平日18:00 JST** に
-`fetch_data.py` が走り、`data/prices.json` を自動コミットします（手動実行も可）。
+「サンプル投入」ボタンで例（約2年前に主要株を各100株購入の想定）をすぐ試せます。
 
 ---
 
-## 銘柄を追加する
+## GitHub Pages で公開
 
-`jp_universe.py` の `UNIVERSE` に1行足すだけ。
+1. このフォルダの中身をリポジトリ直下に push
+2. **Settings ▸ Pages** で「Deploy from a branch」→ `main` / `(root)`
+3. `https://<ユーザー名>.github.io/<リポジトリ名>/` で公開
 
-```python
-("6920", "レーザーテック", "電気機器", 90_000_000),
-#  コード   社名            業種         発行済株式数(概算・時価総額加重用)
-```
+### データ自動更新（任意）
 
-→ `python3 fetch_data.py` を再実行すれば反映されます。
-将来、日経225の全構成銘柄を入れれば「日経225そのもの」も再現できます。
-
-比較対象（ベンチマーク）も `jp_universe.py` の `BENCHMARKS` で増やせます（例: NYダウ `^DJI` を追加）。
-シンボルはYahoo Finance形式。先頭のシンボルが営業日カレンダーの基準になります。
+`.github/workflows/update-data.yml` 同梱。**Settings ▸ Actions ▸ General ▸ Workflow permissions** を
+「Read and write」にすると、平日18時(JST)に `fetch_data.py` が走り `data/prices.json` を自動更新します。
 
 ---
 
-## 加重方式の違い（積立＝毎日の購入額をどう配分するか）
+## 扱える銘柄を増やす
 
-| 方式 | 配分 | 性格 |
-|---|---|---|
-| **均等加重** | 全銘柄に同額 | 中小型の上昇を拾いやすく、長期で時価総額型を上回りやすい。**日経超えの本命** |
-| **株価加重** | 株価に比例 | 日経225と同じ方式。値がさ株の影響が大きい |
-| **時価総額加重** | 時価総額に比例 | TOPIX型。大型株中心で指数本体に近い動き（発行株数は概算） |
-| **カスタム比率** | 自分で指定 | 実験用。確信のある銘柄を厚くするなど |
+`jp_universe.py` の `UNIVERSE` に1行追加 → `python3 fetch_data.py`。
+保有に入れたい銘柄が収録外なら、ここに足してから再取得してください（存在しないコードは自動スキップ）。
 
-## 指標の定義
-
-- **累積リターン / CAGR** … 指数モードの単純騰落率・年率換算
-- **年率リターン(IRR)** … 積立モードの資金加重収益率（入金タイミングを考慮した実質年率）
-- **最大ドローダウン** … ピークからの最大下落率
-- **vs 日経225** … 同条件の日経と比べた超過分
+比較対象（日経225・S&P500）も `BENCHMARKS` で増減できます（例: NYダウ `^DJI`）。
 
 ---
 
@@ -95,33 +74,31 @@ Workflow permissions** を「Read and write」にしておけば、**平日18:00
 
 ```
 jp-index-builder/
-├─ index.html          サイト本体（GitHub Pagesのトップ）
-├─ style.css           デザイン
-├─ engine.js           指数/積立の計算エンジン（DOM非依存）
-├─ app.js              UI制御
-├─ data/prices.json    株価データ（最初はサンプル／fetch_data.pyで実データ化）
-├─ fetch_data.py       stooqから実データ取得
-├─ jp_universe.py      収録銘柄リスト（ここを編集して銘柄追加）
-├─ make_sample.py      サンプルデータ生成
-├─ preview.html        オフライン単体版（ダブルクリックで開ける）
-├─ requirements.txt
+├─ index.html        サイト本体（保有トラッカー）
+├─ style.css         デザイン
+├─ engine.js         評価・ベンチ比較の計算（computePortfolio）
+├─ app.js            UI制御（保有入力・チャート・テーブル）
+├─ data/prices.json  価格データ（fetch_data.pyで実データ化）
+├─ fetch_data.py     Yahoo Financeから実データ取得（curl経由）
+├─ jp_universe.py    収録銘柄リスト（編集して銘柄追加）
+├─ make_sample.py    サンプルデータ生成
+├─ preview.html      オフライン単体版（ダブルクリック起動）
 ├─ .github/workflows/update-data.yml  データ自動更新
 └─ （開発用）verify.cjs / smoke.cjs / build_preview.cjs
 ```
 
-### 開発用テスト
+### 開発テスト
 
 ```bash
-node verify.cjs          # 計算ロジックの数値検証（依存なし）
-npm i jsdom && node smoke.cjs   # ブラウザ相当のUIスモークテスト
-node build_preview.cjs   # preview.html を再生成
+node verify.cjs               # 計算ロジック検証（依存なし）
+npm i jsdom && node smoke.cjs # ブラウザ相当のUIスモークテスト
+node build_preview.cjs        # preview.html 再生成
 ```
 
 ---
 
 ## 注意・免責
 
-配当・売買手数料・税金は考慮していません。積立は終値で端株購入できる前提の簡易シミュレーションです。
-S&P500は現地通貨(USD)の指数水準で比較しており、為替(USD/JPY)は考慮していません。
-時価総額加重の発行済株式数は概算値です。本ツールは情報提供のみを目的とし、投資勧誘・助言ではありません。
-データ提供元 Yahoo Finance の精度・可用性についても保証しません。投資判断はご自身の責任で。
+配当・売買手数料・税金は考慮していません。評価額＝株数×終値の簡易計算です。
+日経225・S&P500との比較は「同じ資金を同じ取得日に各指数へ入れた場合」で、S&P500は現地通貨(USD)指数・為替未考慮。
+本ツールは情報提供のみを目的とし、投資勧誘・助言ではありません。データ提供元 Yahoo Finance の精度・可用性も保証しません。投資判断はご自身の責任で。

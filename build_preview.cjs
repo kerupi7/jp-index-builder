@@ -11,6 +11,12 @@ const style = R("style.css");
 const engine = R("engine.js");
 const app = R("app.js");
 const data = JSON.parse(R("data/prices.json"));
+// 同梱ライブラリ（CDN非依存・オフラインでも動くように全部インライン）
+const chartjs = R("chart.umd.min.js");
+const fpjs = R("flatpickr.min.js");
+const fpja = R("flatpickr.ja.js");
+const fpcss = R("flatpickr.min.css");
+const fpdark = R("flatpickr.dark.css");
 
 // 週次に間引いてサイズを縮小（プレビュー用途）
 const step = 5;
@@ -42,11 +48,15 @@ const body = R("index.html")
 const out = `<!DOCTYPE html>
 <html lang="ja"><head><meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>自作指数ビルダー（オフライン・プレビュー）</title>
+<title>保有トラッカー（オフライン・プレビュー）</title>
+<style>${fpcss}</style>
+<style>${fpdark}</style>
 <style>${style}</style>
 </head><body>
 ${body}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.3/chart.umd.min.js"></script>
+<script>${chartjs}</script>
+<script>${fpjs}</script>
+<script>${fpja}</script>
 <script>window.__PRICES__=${JSON.stringify(small)};</script>
 <script>${engine}</script>
 <script>${app}</script>

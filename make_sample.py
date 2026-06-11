@@ -69,10 +69,23 @@ def main():
             s.append(round(s[-1] * (1 + r), 2))
         return s
 
-    # 日経225（市場全体・JP株のベータ基準）: 28000あたりから上昇
-    nk = gbm(28000.0, 0.10, 0.16)
-    # S&P500（USD指数・参考比較）: 4250あたりから強めの上昇
-    sp = gbm(4250.0, 0.13, 0.15)
+    # 各ベンチマークを合成。先頭(日経)を個別株のベータ基準に使う。
+    BENCH_PARAMS = {
+        "^N225":   (28000.0, 0.10, 0.16),
+        "^GSPC":   (4250.0,  0.13, 0.15),
+        "^IXIC":   (14000.0, 0.16, 0.20),
+        "^NDX":    (15000.0, 0.18, 0.22),
+        "^NYFANG": (6000.0,  0.22, 0.30),
+    }
+    benchmarks = {}
+    nk = None
+    for b in BENCHMARKS:
+        sym = b["symbol"].upper()
+        s0, mu, sig = BENCH_PARAMS.get(sym, (10000.0, 0.10, 0.18))
+        series = gbm(s0, mu, sig)
+        if nk is None:
+            nk = series
+        benchmarks[sym] = {"name": b["name"], "close": series}
 
     stocks = {}
     for code, name, sector, shares in UNIVERSE:
@@ -95,10 +108,7 @@ def main():
         "start": dates[0],
         "end": dates[-1],
         "dates": dates,
-        "benchmarks": {
-            BENCHMARKS[0]["symbol"].upper(): {"name": BENCHMARKS[0]["name"], "close": nk},
-            BENCHMARKS[1]["symbol"].upper(): {"name": BENCHMARKS[1]["name"], "close": sp},
-        },
+        "benchmarks": benchmarks,
         "stocks": stocks,
     }
     os.makedirs(DATA_DIR, exist_ok=True)

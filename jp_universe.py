@@ -172,10 +172,14 @@ UNIVERSE = [
 ]
 
 # 比較対象ベンチマークの Yahoo Finance シンボル（先頭が営業日カレンダーの基準＝日経225）
-# ^N225=日経225, ^GSPC=S&P500。必要なら ^TPX(TOPIX) や ^DJI(NYダウ) なども追加可。
+# 1行追加すればチャートに増える。定番の追加候補:
+#   ^DJI=NYダウ, ^RUT=ラッセル2000, ^SOX=SOX半導体, ^TPX=TOPIX
 BENCHMARKS = [
     {"symbol": "^N225", "name": "日経225"},
     {"symbol": "^GSPC", "name": "S&P500"},
+    {"symbol": "^IXIC", "name": "NASDAQ"},
+    {"symbol": "^NDX", "name": "NASDAQ100"},
+    {"symbol": "^NYFANG", "name": "FANG+"},
 ]
 BENCHMARK = BENCHMARKS[0]  # 後方互換
 

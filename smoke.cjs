@@ -1,4 +1,4 @@
-/* smoke.cjs — jsdomでindex.html+engine.js+app.jsを実際に動かすブラウザ相当テスト（開発用） */
+/* smoke.cjs — jsdomで保有トラッカー(index.html+engine.js+app.js)を実際に動かすテスト（開発用） */
 const fs = require("fs");
 const path = require("path");
 const { JSDOM } = require("jsdom");
@@ -6,19 +6,19 @@ const { JSDOM } = require("jsdom");
 const dir = __dirname;
 const html = fs.readFileSync(path.join(dir, "index.html"), "utf8");
 const pricesJSON = fs.readFileSync(path.join(dir, "data", "prices.json"), "utf8");
-const NSTOCK = Object.keys(JSON.parse(pricesJSON).stocks).length;  // 収録銘柄数（動的）
+const DATA = JSON.parse(pricesJSON);
+const NSTOCK = Object.keys(DATA.stocks).length;
+const NBENCH = Object.keys(DATA.benchmarks).length;
 
 const dom = new JSDOM(html, { runScripts: "outside-only", pretendToBeVisual: true, url: "http://localhost/" });
 const { window } = dom;
 const { document } = window;
 
-// --- スタブ ---
 window.fetch = () => Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(JSON.parse(pricesJSON)) });
-window.Chart = class { constructor(ctx, cfg) { this.data = cfg.data; this.options = cfg.options; } update() {} destroy() {} };
+window.Chart = class { constructor(c, cfg) { this.data = cfg.data; this.options = cfg.options; } update() {} destroy() {} };
 window.requestAnimationFrame = (cb) => setTimeout(() => cb(Date.now()), 0);
 window.cancelAnimationFrame = (id) => clearTimeout(id);
 
-// --- スクリプト注入（window文脈でeval）---
 window.eval(fs.readFileSync(path.join(dir, "engine.js"), "utf8"));
 window.eval(fs.readFileSync(path.join(dir, "app.js"), "utf8"));
 
@@ -26,83 +26,66 @@ const tick = () => new Promise((r) => setTimeout(r, 8));
 let pass = 0, fail = 0;
 const check = (n, c, x) => c ? (pass++, console.log("  ✓ " + n)) : (fail++, console.log("  ✗ " + n + "  " + (x || "")));
 const $ = (s) => document.querySelector(s);
-const setRadio = (v) => { const r = document.querySelector(`input[name=wm][value=${v}]`); r.checked = true; r.dispatchEvent(new window.Event("change")); };
+const entryDate = DATA.dates[Math.max(0, DATA.dates.length - 250)];
+
+function addHolding(ticker, shares, cost, date) {
+  $("#inTicker").value = ticker; $("#inShares").value = String(shares);
+  $("#inCost").value = String(cost); $("#inDate").value = date;
+  $("#btnAdd").click();
+}
 
 (async () => {
-  await tick(); await tick(); // fetch→init→schedule(rAF)
+  await tick(); await tick();
 
   console.log("[起動]");
-  check("データバッジがサンプル表示", /サンプル/.test($("#dataBadge").textContent), $("#dataBadge").textContent);
-  check("銘柄リスト=収録数", document.querySelectorAll("#stockList .stock-item").length === NSTOCK,
-    `list ${document.querySelectorAll("#stockList .stock-item").length} vs ${NSTOCK}`);
-  check("初期選択=主要10", $("#selCount").textContent === "10", $("#selCount").textContent);
-  check("比較チップ3つ(自作/日経/S&P)", document.querySelectorAll("#compareStrip .cmp").length === 3,
-    document.querySelectorAll("#compareStrip .cmp").length);
-  check("DCA表が10行", document.querySelectorAll("#constTable tbody tr").length === 10,
-    document.querySelectorAll("#constTable tbody tr").length);
-  check("DCA表に評価額列", /評価額/.test($("#constTable thead").textContent));
-  check("DCA表に取得単価列", /取得単価/.test($("#constTable thead").textContent));
-  check("DCA表に含み損益列", /含み損益/.test($("#constTable thead").textContent));
-  check("取得単価セルに¥", /¥[\d,]/.test($("#constTable tbody").textContent));
-  const cmpTxt = $("#compareStrip").textContent;
-  check("チップに自作指数", /自作指数/.test(cmpTxt));
-  check("チップに日経225", /日経225/.test(cmpTxt));
-  check("チップにS&P500", /S&P500/.test(cmpTxt));
-  check("統計行に最終資産¥", /最終資産/.test($("#statLine").textContent) && /¥[\d,]/.test($("#statLine").textContent));
-  check("チップに＋ーの%表示", /[+−]\d/.test(cmpTxt), cmpTxt.slice(0, 40));
+  check("データバッジがサンプル", /サンプル/.test($("#dataBadge").textContent), $("#dataBadge").textContent);
+  check("datalistに収録数の候補", document.querySelectorAll("#tickerList option").length === NSTOCK,
+    document.querySelectorAll("#tickerList option").length);
+  check("初期は保有0・空状態", $("#holdCount").textContent === "0" && /保有未入力/.test($("#compareStrip").textContent));
 
-  console.log("\n[リターン%トグル]");
-  $('#unitToggle button[data-unit=pct]').click(); await tick(); await tick();
-  check("pctボタンがactive", $('#unitToggle button[data-unit=pct]').classList.contains("active"));
-  check("凡例が%表示に", /％|%/.test($("#chartLegendNote").textContent), $("#chartLegendNote").textContent);
+  console.log("\n[保有を1件追加]");
+  addHolding("7203 トヨタ自動車", 100, 2500, entryDate);
+  await tick(); await tick();
+  check("保有数1", $("#holdCount").textContent === "1", $("#holdCount").textContent);
+  check("保有一覧に1件", document.querySelectorAll("#holdingList .holding-item").length === 1);
+  check("比較チップ=保有+ベンチ数", document.querySelectorAll("#compareStrip .cmp").length === 1 + NBENCH,
+    document.querySelectorAll("#compareStrip .cmp").length + " vs " + (1 + NBENCH));
+  check("チップに保有/日経225/S&P500", /保有/.test($("#compareStrip").textContent) && /日経225/.test($("#compareStrip").textContent) && /S&P500/.test($("#compareStrip").textContent));
+  check("保有テーブル1行", document.querySelectorAll("#holdingsTable tbody tr").length === 1);
+  check("テーブルに取得単価・取得日列", /取得単価/.test($("#holdingsTable thead").textContent) && /取得日/.test($("#holdingsTable thead").textContent));
+  check("統計行に投資額¥", /投資額/.test($("#statLine").textContent) && /¥[\d,]/.test($("#statLine").textContent));
+  check("localStorageに保存", /7203/.test(window.localStorage.getItem("jpidx.holdings.v1") || ""));
+
+  console.log("\n[¥/%トグル]");
   $('#unitToggle button[data-unit=abs]').click(); await tick(); await tick();
-  check("abs戻しで資産表示", /評価額|元本/.test($("#chartLegendNote").textContent), $("#chartLegendNote").textContent);
+  check("評価額表示", /評価額|元本/.test($("#chartLegendNote").textContent), $("#chartLegendNote").textContent);
+  $('#unitToggle button[data-unit=pct]').click(); await tick(); await tick();
+  check("リターン%表示", /％|%/.test($("#chartLegendNote").textContent), $("#chartLegendNote").textContent);
 
-  console.log("\n[指数モードへ切替]");
-  $('.mode-tab[data-mode=index]').click();
+  console.log("\n[名前で追加(コード解決)]");
+  addHolding("ソニーグループ", 50, 12000, entryDate);
   await tick(); await tick();
-  check("チャート見出しが指数", /指数/.test($("#chartTitle").textContent), $("#chartTitle").textContent);
-  check("指数表に期間リターン列", /期間リターン/.test($("#constTable thead").textContent));
-  check("指数モードでチップ3つ", document.querySelectorAll("#compareStrip .cmp").length === 3);
-  check("統計行にCAGR", /CAGR/.test($("#statLine").textContent));
+  check("名前→コード解決で追加(2件)", $("#holdCount").textContent === "2", $("#holdCount").textContent);
+  check("テーブル2行", document.querySelectorAll("#holdingsTable tbody tr").length === 2);
 
-  console.log("\n[全選択]");
-  $("#btnAll").click(); await tick(); await tick();
-  check("選択数=収録数", $("#selCount").textContent === String(NSTOCK), $("#selCount").textContent);
-  check("表が収録数の行", document.querySelectorAll("#constTable tbody tr").length === NSTOCK,
-    document.querySelectorAll("#constTable tbody tr").length);
+  console.log("\n[不正入力ガード]");
+  addHolding("", 100, 2500, entryDate); await tick();
+  check("銘柄空はエラー表示", $("#formMsg").classList.contains("err"));
+  check("件数は増えない(2のまま)", $("#holdCount").textContent === "2");
 
-  console.log("\n[カスタム比率]");
-  setRadio("custom"); await tick(); await tick();
-  check("カスタムパネル表示", !$("#customPanel").classList.contains("hidden"));
-  check("カスタム行=収録数", document.querySelectorAll("#customPanel .custom-row").length === NSTOCK,
-    document.querySelectorAll("#customPanel .custom-row").length);
+  console.log("\n[1件削除]");
+  $("#holdingList .h-del").click(); await tick(); await tick();
+  check("削除で1件に", $("#holdCount").textContent === "1", $("#holdCount").textContent);
 
-  console.log("\n[時価総額/株価でも落ちない]");
-  setRadio("mktcap"); await tick(); await tick();
-  check("mktcapでチップ描画", document.querySelectorAll("#compareStrip .cmp").length === 3);
-  setRadio("price"); await tick(); await tick();
-  check("priceでチップ描画", document.querySelectorAll("#compareStrip .cmp").length === 3);
+  console.log("\n[サンプル投入]");
+  $("#btnSample").click(); await tick(); await tick();
+  check("サンプルで複数保有", Number($("#holdCount").textContent) >= 3, $("#holdCount").textContent);
+  check("テーブルも複数行", document.querySelectorAll("#holdingsTable tbody tr").length >= 3);
+  check("チャート行(日経/S&P/保有)", $("#mainChart") !== null);
 
-  console.log("\n[期間を狭める]");
-  setRadio("equal"); await tick();
-  const sr = $("#startRange"); sr.value = Math.floor(window.Engine ? 600 : 600); sr.dispatchEvent(new window.Event("input"));
-  await tick(); await tick();
-  check("開始ラベル更新", $("#startLabel").textContent.length === 10, $("#startLabel").textContent);
-  check("狭めても表に行", document.querySelectorAll("#constTable tbody tr").length > 0);
-
-  console.log("\n[保存→呼び出し]");
-  $("#saveName").value = "テスト指数"; $("#btnSave").click(); await tick();
-  check("保存リストに1件", document.querySelectorAll("#savedList .saved-item").length === 1,
-    document.querySelectorAll("#savedList .saved-item").length);
-  $("#btnClear").click(); await tick(); await tick();
-  check("クリアで0銘柄", $("#selCount").textContent === "0");
-  document.querySelector("#savedList .saved-item .snm").click(); await tick(); await tick();
-  check("呼び出しで銘柄復帰", +$("#selCount").textContent > 0, $("#selCount").textContent);
-
-  console.log("\n[空選択ガード]");
-  $("#btnClear").click(); await tick(); await tick();
-  check("空でもクラッシュしない", /銘柄/.test($("#compareStrip").textContent));
+  console.log("\n[全消去]");
+  $("#btnClearAll").click(); await tick(); await tick();
+  check("0件・空状態に戻る", $("#holdCount").textContent === "0" && /保有未入力/.test($("#compareStrip").textContent));
 
   console.log(`\n=== smoke: ${pass} passed, ${fail} failed ===`);
   process.exit(fail ? 1 : 0);
