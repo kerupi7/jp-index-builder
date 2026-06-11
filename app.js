@@ -36,8 +36,8 @@
     }
 
     buildDatalist();
-    // 既定の取得日＝約1年前（直近日だと履歴1日でチャートが出ないため）
-    const defaultDate = data.dates[Math.max(0, data.dates.length - 250)];
+    // 既定の取得日＝当日（ローカル時刻のYYYY-MM-DD）
+    const defaultDate = new Date().toLocaleDateString("sv-SE");
     $("#inDate").value = defaultDate;
     if (window.flatpickr) {
       const loc = (window.flatpickr.l10ns && window.flatpickr.l10ns.ja) || "default";
