@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>自作指数ビルダー｜日本株で日経225を超える指数を作る</title>
+<meta name="description" content="日本株を組み合わせて自分だけの株価指数を作り、毎日定額積立で日経225と比較できるツール。" />
+<link rel="stylesheet" href="style.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.3/chart.umd.min.js" defer></script>
+<script src="engine.js" defer></script>
+<script src="app.js" defer></script>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <span class="logo">指</span>
+    <div>
+      <h1>自作指数ビルダー</h1>
+      <p class="tag">日本株を組み合わせて、日経225を超える"最強指数"を探す</p>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <span id="dataBadge" class="badge badge-warn">データ読込中…</span>
+  </div>
+</header>
+
+<main class="layout">
+  <!-- ============ サイドバー（操作パネル）============ -->
+  <aside class="sidebar">
+    <div class="mode-tabs" id="modeTabs">
+      <button class="mode-tab active" data-mode="dca">積立モード</button>
+      <button class="mode-tab" data-mode="index">指数モード</button>
+    </div>
+    <p class="mode-desc" id="modeDesc"></p>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>① 銘柄を選ぶ <span id="selCount" class="pill">0</span></h2>
+        <div class="mini-btns">
+          <button id="btnAll" class="mini">全</button>
+          <button id="btnTop10" class="mini">主要10</button>
+          <button id="btnClear" class="mini">解除</button>
+        </div>
+      </div>
+      <input id="search" class="search" type="search" placeholder="銘柄名・コードで検索（例: トヨタ / 7203）" />
+      <select id="sectorFilter" class="select"><option value="">全業種</option></select>
+      <div id="stockList" class="stocklist"></div>
+    </section>
+
+    <section class="panel">
+      <h2>② 加重方式</h2>
+      <div class="weights" id="weightMethods">
+        <label class="wopt"><input type="radio" name="wm" value="equal" checked /><b>均等加重</b><small>全銘柄に同額。中小型を拾え、日経超えの本命</small></label>
+        <label class="wopt"><input type="radio" name="wm" value="price" /><b>株価加重</b><small>株価が高い銘柄ほど多く。日経225と同じ方式</small></label>
+        <label class="wopt"><input type="radio" name="wm" value="mktcap" /><b>時価総額加重</b><small>大型株ほど多く。TOPIX型（発行株数は概算）</small></label>
+        <label class="wopt"><input type="radio" name="wm" value="custom" /><b>カスタム比率</b><small>銘柄ごとに配分を自分で指定</small></label>
+      </div>
+      <div id="customPanel" class="custom-panel hidden"></div>
+    </section>
+
+    <section class="panel">
+      <h2>③ 期間と積立額</h2>
+      <div class="range-row">
+        <label>開始</label>
+        <input type="range" id="startRange" min="0" max="100" value="0" />
+        <span id="startLabel" class="rlabel"></span>
+      </div>
+      <div class="range-row">
+        <label>終了</label>
+        <input type="range" id="endRange" min="0" max="100" value="100" />
+        <span id="endLabel" class="rlabel"></span>
+      </div>
+      <div class="amount-row" id="amountRow">
+        <label>毎日の積立額</label>
+        <div class="amount-input">
+          <input type="number" id="dailyAmount" value="100" min="1" step="10" />
+          <span>円 / 営業日</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>④ この指数を保存</h2>
+      <div class="save-row">
+        <input id="saveName" class="search" type="text" placeholder="指数名（例: 中小型グロース）" />
+        <button id="btnSave" class="primary small">保存</button>
+      </div>
+      <div id="savedList" class="saved-list"></div>
+    </section>
+  </aside>
+
+  <!-- ============ メイン（結果）============ -->
+  <section class="content">
+    <div class="chart-card">
+      <div class="chart-head">
+        <h2 id="chartTitle">資産推移</h2>
+        <div class="chart-head-right">
+          <div class="unit-toggle" id="unitToggle">
+            <button data-unit="pct" class="active">リターン%</button>
+            <button data-unit="abs">資産額</button>
+          </div>
+          <span id="chartLegendNote" class="legend-note"></span>
+        </div>
+      </div>
+      <div id="compareStrip" class="compare-strip"></div>
+      <div class="chart-wrap"><canvas id="mainChart"></canvas></div>
+      <div id="statLine" class="stat-line"></div>
+    </div>
+
+    <div class="table-card">
+      <div class="table-head">
+        <h2>構成銘柄の内訳</h2>
+        <div class="table-tools">
+          <span class="hint">列見出しクリックで並び替え</span>
+        </div>
+      </div>
+      <div class="table-scroll">
+        <table id="constTable">
+          <thead></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <p class="disclaimer" id="disclaimer"></p>
+  </section>
+</main>
+
+<div id="toast" class="toast hidden"></div>
+</body>
+</html>

@@ -1,0 +1,35 @@
+name: 株価データ更新
+
+# 平日18:00 JST（=09:00 UTC）に自動実行。手動実行も可。
+on:
+  schedule:
+    - cron: "0 9 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 株価を取得（Yahoo Finance・標準ライブラリのみ）
+        run: python fetch_data.py --years 5
+
+      - name: 変更があればコミット
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet -- data/prices.json; then
+            echo "更新なし"
+          else
+            git add data/prices.json
+            git commit -m "data: prices.json 自動更新 ($(date -u +%Y-%m-%d))"
+            git push
+          fi

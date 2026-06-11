@@ -1,0 +1,5 @@
+# 開発ツール(smoke.cjs)用。本番サイトには不要。
+node_modules/
+package.json
+package-lock.json
+.DS_Store
