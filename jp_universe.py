@@ -178,7 +178,6 @@ UNIVERSE = [
 BENCHMARKS = [
     {"symbol": "^N225", "name": "日経225"},
     {"symbol": "^GSPC", "name": "S&P500"},
-    {"symbol": "^IXIC", "name": "NASDAQ"},
     {"symbol": "^NDX", "name": "NASDAQ100"},
     {"symbol": "^NYFANG", "name": "FANG+"},
     {"symbol": "1306.T", "name": "TOPIX"},  # TOPIX連動ETF(1306)で代用。%比較は指数とほぼ同一
