@@ -95,6 +95,13 @@ function addHolding(ticker, shares, cost, date) {
     check("285Aがサンプルに存在(make_sample要再生成)", false, "no 285A in data");
   }
 
+  console.log("\n[小数株数(フル桁)]");
+  $("#btnClearAll").click(); await tick();
+  addHolding("7203 トヨタ自動車", 0.46948356, 2500, entryDate); await tick(); await tick();
+  check("小数株数を受付(1件)", $("#holdCount").textContent === "1", $("#holdCount").textContent);
+  check("一覧にフル桁表示", /0\.46948356/.test($("#holdingList").textContent), $("#holdingList").textContent.slice(0, 50));
+  check("表にもフル桁", /0\.46948356/.test($("#holdingsTable tbody").textContent));
+
   console.log(`\n=== smoke: ${pass} passed, ${fail} failed ===`);
   process.exit(fail ? 1 : 0);
 })().catch((e) => { console.error("FATAL", e); process.exit(2); });

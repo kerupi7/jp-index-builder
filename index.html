@@ -5,14 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>保有トラッカー｜日経225・S&P500とパフォーマンス比較</title>
 <meta name="description" content="自分の保有株（株数・取得単価・取得日）を入力し、評価額の推移と日経225・S&P500とのパフォーマンス比較を毎日チェック。" />
-<link rel="stylesheet" href="style.css?v=3" />
+<link rel="stylesheet" href="style.css?v=5" />
 <link rel="stylesheet" href="flatpickr.min.css" />
 <link rel="stylesheet" href="flatpickr.dark.css" />
 <script src="chart.umd.min.js" defer></script>
 <script src="flatpickr.min.js" defer></script>
 <script src="flatpickr.ja.js" defer></script>
-<script src="engine.js?v=3" defer></script>
-<script src="app.js?v=3" defer></script>
+<script src="engine.js?v=5" defer></script>
+<script src="app.js?v=5" defer></script>
 </head>
 <body>
 <header class="topbar">
@@ -40,7 +40,7 @@
         </label>
         <div class="form-row">
           <label>株式数
-            <input id="inShares" class="num" type="number" min="1" step="1" placeholder="100" />
+            <input id="inShares" class="num" type="number" min="0" step="any" placeholder="100" inputmode="decimal" />
           </label>
           <label>取得単価(円)
             <input id="inCost" class="num" type="number" min="0" step="0.1" placeholder="2500" />

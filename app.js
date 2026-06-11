@@ -119,7 +119,7 @@
       row.innerHTML =
         `<span class="h-nm">${h.code} ${nm}</span>` +
         `<button class="h-del" title="削除">✕</button>` +
-        `<span class="h-sub">${h.shares.toLocaleString()}株 × ¥${Math.round(h.cost).toLocaleString()} ・ ${h.date}</span>`;
+        `<span class="h-sub">${fmtShares(h.shares)}株 × ¥${Math.round(h.cost).toLocaleString()} ・ ${h.date}</span>`;
       row.querySelector(".h-del").addEventListener("click", () => {
         state.holdings.splice(i, 1); saveHoldings(); renderHoldingList(); schedule();
       });
@@ -219,7 +219,7 @@
   function renderStatLine(pairs) {
     $("#statLine").innerHTML = pairs.map(([k, v]) => `<span>${k}<b>${v}</b></span>`).join("");
   }
-  function ppGap(d) { return "保有と " + (d >= 0 ? "+" : "−") + Math.abs(d * 100).toFixed(1) + "%pt"; }
+  function ppGap(d) { return "保有と " + (d >= 0 ? "+" : "−") + Math.abs(d * 100).toFixed(2) + "%pt"; }
 
   // ---------- チャート ----------
   function cssVar(name) { return getComputedStyle(document.body).getPropertyValue(name).trim(); }
@@ -265,7 +265,7 @@
     const maxW = Math.max(...rows.map((r) => r.weight), 0.0001);
     $("#holdingsTable").querySelector("tbody").innerHTML = rows.map((r) =>
       `<tr><td class="code">${r.code}</td><td style="text-align:left">${r.name}</td>` +
-      `<td>${r.shares.toLocaleString()}</td><td>${yen(r.cost)}</td><td>${r.date}</td>` +
+      `<td>${fmtShares(r.shares)}</td><td>${yen(r.cost)}</td><td>${r.date}</td>` +
       `<td>${r.price !== null ? yen(r.price) : "—"}</td><td>${yen(r.value)}</td>` +
       `<td class="${r.pl >= 0 ? "up" : "down"}">${signYen(r.pl)}</td>` +
       `<td class="${r.ret >= 0 ? "up" : "down"}">${signPct(r.ret)}</td>` +
@@ -288,8 +288,10 @@
     if (Math.abs(v) >= 1e4) return (v / 1e4).toFixed(1) + "万";
     return Math.round(v).toLocaleString("ja");
   }
-  function pct(v) { return (v * 100).toFixed(1) + "%"; }
-  function signPct(v) { return (v >= 0 ? "+" : "−") + Math.abs(v * 100).toFixed(1) + "%"; }
+  function pct(v) { return (v * 100).toFixed(2) + "%"; }
+  function signPct(v) { return (v >= 0 ? "+" : "−") + Math.abs(v * 100).toFixed(2) + "%"; }
+  // 株数: 整数はそのまま、小数はフル桁(最大8桁)で表示
+  function fmtShares(v) { return Number.isInteger(v) ? v.toLocaleString("ja") : v.toLocaleString("ja", { maximumFractionDigits: 8 }); }
 
   let toastT = null;
   function toast(msg) {
