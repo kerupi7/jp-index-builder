@@ -3,7 +3,7 @@ name: 株価データ更新
 # 平日16:00 JST（=07:00 UTC）に自動実行。手動実行も可。
 on:
   schedule:
-    - cron: "0 7 * * 1-5"
+    - cron: "42 6 * * 1-5"
   workflow_dispatch:
 
 permissions:
