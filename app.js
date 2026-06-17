@@ -50,9 +50,9 @@
 
     wireEvents();
     $("#disclaimer").innerHTML =
-      "※ 配当・売買手数料・税金は考慮していません。評価額＝株数×終値。日経225・S&P500のラインは" +
-      "「同じ資金を同じ取得日に各指数へ入れていたら」の価値で、あなたの保有がそれを上回れば指数超えです。" +
-      "S&P500は現地通貨(USD)指数で為替は未考慮。発行株数等の概算あり。本ツールは情報提供のみ・投資助言ではありません。";
+      "※ 配当・売買手数料・税金は考慮していません。評価額＝株数×終値。各指数のラインは" +
+      "「保有開始日からその指数が実際に何%動いたか」で、あなたのリターンがそれを上回れば指数超えです。" +
+      "米指数(S&P500・NASDAQ100・FANG+)は現地通貨(USD)で為替は未考慮。本ツールは情報提供のみ・投資助言ではありません。";
     renderHoldingList();
     schedule();
   }
@@ -177,7 +177,7 @@
 
     let wins = 0;
     const benchChips = pf.benches.map((b, k) => {
-      const bRet = costF > 0 ? b.value[n - 1] / costF - 1 : 0;
+      const bRet = b.ret[n - 1]; // 始点からの指数リターン
       if (pRet > bRet) wins++;
       return { label: b.name, color: col(BENCH_COLORS[k % BENCH_COLORS.length]), pct: bRet, sub: ppGap(pRet - bRet) };
     });
@@ -195,14 +195,14 @@
     if (state.unit === "pct") {
       const toPct = (arr) => arr.map((v, i) => (pf.cost[i] > 0 ? (v / pf.cost[i] - 1) * 100 : 0));
       datasets = [line("保有", toPct(pf.value), SELF_COLOR, false)];
-      pf.benches.forEach((b, k) => datasets.push(line(b.name, toPct(b.value), BENCH_COLORS[k % BENCH_COLORS.length], false)));
+      pf.benches.forEach((b, k) => datasets.push(line(b.name, b.ret.map((r) => r * 100), BENCH_COLORS[k % BENCH_COLORS.length], false)));
       yFmt = (v) => (v >= 0 ? "+" : "") + v.toFixed(0) + "%";
-      note = "元本に対するリターン％（同じ資金を同じ取得日に各指数へ入れた場合と比較）";
+      note = "保有はあなたのリターン／各指数は保有開始日からの指数リターン（始点=0%）";
     } else {
       datasets = [line("保有評価額", pf.value, SELF_COLOR, false), line("投資元本", pf.cost, "--mut2", true)];
-      pf.benches.forEach((b, k) => datasets.push(line(`${b.name}に同額`, b.value, BENCH_COLORS[k % BENCH_COLORS.length], false)));
+      pf.benches.forEach((b, k) => datasets.push(line(`${b.name}(指数)`, b.value, BENCH_COLORS[k % BENCH_COLORS.length], false)));
       yFmt = (v) => yenShort(v);
-      note = "実線=評価額／点線=投じた元本";
+      note = "実線=評価額／点線=元本／指数=総元本を始点に入れた場合";
     }
     try { drawChart(pf.dates, datasets, yFmt); $("#chartLegendNote").textContent = note; }
     catch (e) { console.error("chart error", e); }

@@ -221,34 +221,37 @@
     const benches = benchmarksOf(data);
     const H = holdings
       .filter((h) => data.stocks[h.code] && h.shares > 0)
-      .map((h) => {
-        const ei = dateIndex(dates, h.date);
-        return { ...h, ei, bEntry: benches.map((b) => b.close[ei]) };
-      });
+      .map((h) => ({ ...h, ei: dateIndex(dates, h.date) }));
     if (!H.length) return null;
 
     const i0 = Math.min(...H.map((h) => h.ei));
     const i1 = dates.length - 1;
     const value = [], cost = [];
-    const benchVals = benches.map(() => []);
 
     for (let t = i0; t <= i1; t++) {
       let v = 0, c = 0;
-      const bv = benches.map(() => 0);
       for (const h of H) {
         if (h.ei > t) continue; // まだ取得していない
         const invested = h.shares * h.cost;
         c += invested;
         const p = priceAt(data, h.code, t);
         if (p !== null) v += h.shares * p;
-        benches.forEach((b, k) => {
-          const be = h.bEntry[k], bt = b.close[t];
-          if (be && bt) bv[k] += invested * (bt / be); // 同額・同日に指数へ入れたら
-        });
       }
       value.push(v); cost.push(c);
-      benches.forEach((b, k) => benchVals[k].push(bv[k]));
     }
+
+    // 各ベンチ＝チャート始点(i0)からの単純な指数リターン（保有期間中に指数が実際にどれだけ動いたか）
+    const costFinal = cost[cost.length - 1] || 0;
+    const benchOut = benches.map((b) => {
+      const base = b.close[i0];
+      const ret = [], val = [];
+      for (let t = i0; t <= i1; t++) {
+        const r = (base && b.close[t]) ? b.close[t] / base - 1 : 0;
+        ret.push(r);
+        val.push(costFinal * (1 + r)); // ¥モード参考: 総元本を始点に指数へ入れていたら
+      }
+      return { sym: b.sym, name: b.name, ret, value: val };
+    });
 
     const perHolding = H.map((h) => {
       const p = priceAt(data, h.code, i1);
@@ -265,7 +268,7 @@
     return {
       dates: dates.slice(i0, i1 + 1),
       value, cost,
-      benches: benches.map((b, k) => ({ sym: b.sym, name: b.name, value: benchVals[k] })),
+      benches: benchOut,
       perHolding, i0, i1,
     };
   }
