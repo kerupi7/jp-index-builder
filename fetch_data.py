@@ -118,6 +118,48 @@ def align(master_dates, rows):
     return out
 
 
+# 株式分割の段差を後方調整するための分割比候補（順分割と逆分割の両方）。
+_SPLIT_FACTORS = [2, 3, 4, 5, 6, 7, 8, 10, 12, 15, 20, 25, 30, 50, 100,
+                  1 / 2, 1 / 3, 1 / 4, 1 / 5, 1 / 6, 1 / 8, 1 / 10, 1 / 20,
+                  3 / 2, 5 / 2, 4 / 3, 5 / 4, 5 / 3, 10 / 3]
+
+
+def _nearest_split_factor(r, tol=0.05):
+    """日次比 r が分割比 1/f に近ければ分割係数 f を返す。該当なしは None。"""
+    inv = 1.0 / r
+    best, best_err = None, tol
+    for f in _SPLIT_FACTORS:
+        err = abs(inv - f) / f
+        if err < best_err:
+            best, best_err = f, err
+    return best
+
+
+def backadjust_splits(close):
+    """終値系列の株式分割の段差を後方調整して連続にする。
+
+    Yahooの調整後終値が直近の分割を反映しきれていない場合の保険。1日で±48%超
+    かつ比率が単純な分割比(1:2, 1:10 など)に一致する段差だけを分割とみなし、
+    その日より前の値を分割係数で割って（逆分割なら掛けて）スケールを揃える。
+    通常の値動きや、分割比に一致しない急変（決算ギャップ等）は変更しない。
+    """
+    out = list(close)
+    for i in range(1, len(close)):
+        a, b = close[i - 1], close[i]  # 検出は常に元系列の比で行う
+        if not a or not b:
+            continue
+        r = b / a
+        if 0.66 < r < 1.52:  # 通常の値動き（±約50%以内）はスキップ
+            continue
+        f = _nearest_split_factor(r)
+        if not f:
+            continue  # 大きく動いたが分割比に一致しない → 実際の変動として保持
+        for j in range(i):  # 段差より前を分割係数で後方調整
+            if out[j] is not None:
+                out[j] = out[j] / f
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--years", type=float, default=5, help="取得年数 (default 5)")
@@ -149,6 +191,8 @@ def main():
             print(f"  営業日数: {len(master_dates)}")
         else:
             close = align(master_dates, rows)
+        # 分割段差の保険（1306.T等のETFは調整漏れが起きうる。指数は段差なしで素通り）
+        close = backadjust_splits(close)
         benchmarks[b["symbol"].upper()] = {"name": b["name"], "close": close}
         time.sleep(args.sleep)
 
