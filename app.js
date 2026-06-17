@@ -141,11 +141,35 @@
     toast("サンプル保有を入れました（約2年前に各100株購入の想定）");
   }
 
+  // 保有を holdings.json に書き出す（ClaudeCode の生成スクリプトが読む）
+  async function exportHoldings() {
+    if (!state.holdings.length) { toast("保有がありません"); return; }
+    const json = JSON.stringify(state.holdings, null, 2);
+    if (window.showSaveFilePicker) {
+      try {
+        const h = await window.showSaveFilePicker({
+          suggestedName: "holdings.json",
+          types: [{ description: "JSON", accept: { "application/json": [".json"] } }],
+        });
+        const w = await h.createWritable();
+        await w.write(json); await w.close();
+        toast(`保存しました（${state.holdings.length}件）`);
+        return;
+      } catch (e) { if (e && e.name === "AbortError") return; console.error(e); }
+    }
+    const blob = new Blob([json], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob); a.download = "holdings.json"; a.click();
+    URL.revokeObjectURL(a.href);
+    toast(`書き出しました（${state.holdings.length}件）`);
+  }
+
   // ---------- イベント ----------
   function wireEvents() {
     $("#btnAdd").addEventListener("click", addHolding);
     $("#inCost").addEventListener("keydown", (e) => { if (e.key === "Enter") addHolding(); });
     $("#btnSample").addEventListener("click", loadSample);
+    $("#btnExport").addEventListener("click", exportHoldings);
     $("#btnClearAll").addEventListener("click", () => {
       if (!state.holdings.length) return;
       state.holdings = []; saveHoldings(); renderHoldingList(); schedule();

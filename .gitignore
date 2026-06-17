@@ -10,3 +10,7 @@ update_and_push.sh
 com.kerupi.jpindex.update.plist
 *.log
 .DS_Store
+
+# 保有データ（localStorageから書き出し・非公開／ローカルのスクリプトだけが読む）
+data/holdings.json
+holdings.json
