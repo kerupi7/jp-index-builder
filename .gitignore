@@ -3,3 +3,10 @@ node_modules/
 package.json
 package-lock.json
 .DS_Store
+
+__pycache__/
+*.pyc
+update_and_push.sh
+com.kerupi.jpindex.update.plist
+*.log
+.DS_Store
