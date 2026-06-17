@@ -108,12 +108,19 @@ def years_to_range(y):
 
 
 def align(master_dates, rows):
-    """master_dates の各日に終値を割り当て。欠損は前営業日終値で補完、先頭欠損はNone。"""
-    by_date = dict(rows)
-    out, last = [], None
+    """master_dates の各日に「その日以前で最新の終値」を割り当てる（as-of 結合）。
+
+    日本の営業日カレンダーに海外指数(S&P500等)を載せる際、日本が休みの日の
+    海外セッションを取りこぼさないよう、日付の完全一致ではなく「その日までで最新」を採る。
+    欠損日は直近営業日の終値で前方補完。データ開始前(先頭)は None。
+    rows は (date, close) の昇順リストを想定。
+    """
+    rows = sorted(rows)
+    out, last, j, n = [], None, 0, len(rows)
     for d in master_dates:
-        if d in by_date:
-            last = by_date[d]
+        while j < n and rows[j][0] <= d:
+            last = rows[j][1]
+            j += 1
         out.append(last)
     return out
 
